@@ -59,7 +59,7 @@ def _extract_srt_data(srt_path):
 def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, reference_gnss_data):
     
     # decompose parameters
-    frame_interval, start_frame, end_frame = initial_parameters
+    frame_interval, start_frame, end_frame_temp = initial_parameters
 
     # convert path strings to Path Instance
     csv_path = Path(csv_path)
@@ -83,8 +83,10 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
             # get basic information of the movie file
             video_info = ffmpeg.probe(movie_path_each)
             nb_frames = int(video_info["streams"][0]["nb_frames"])
-            if end_frame == 0:
+            if end_frame_temp == 0:
                 end_frame = nb_frames
+            else:
+                end_frame = end_frame_temp
             
             # import movie
             movie_cap = cv2.VideoCapture(str(movie_path_each))
@@ -189,8 +191,10 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
 
             movie_cap = cv2.VideoCapture(str(movie_path_each))
             
-            if end_frame == 0:
+            if end_frame_temp == 0:
                 end_frame = nb_frames
+            else:
+                end_frame = end_frame_temp
                         
             for index_export_frame in range(start_frame, end_frame, frame_interval):
 
