@@ -117,8 +117,8 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
                     shutter_speed_denominator = int(float(srt_data.iloc[index_export_frame]["shutter"].split("/")[1]))
                     shutter_speed = (shutter_speed_numerator, shutter_speed_denominator)
 
-                    print(int(srt_data.iloc[index_export_frame]["ct"]), (int(srt_data.iloc[index_export_frame]["fnum"]), 100))
-
+                    # something wrong with value's formatting.
+                    # only DateTimeOriginal, FNumber and FocalLengthIn35mmFilm are correctly stored into generated Exif.
                     exif_data = {
                         piexif.ExifIFD.DateTimeOriginal: srt_data.iloc[index_export_frame]["time"].strftime("%Y:%m:%d %H:%M:%S"),
                         piexif.ExifIFD.ISOSpeed: int(srt_data.iloc[index_export_frame]["iso"]), # Long
@@ -130,7 +130,6 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
 
                     # Read the existing EXIF metadata from the image file
                     exif_dict = piexif.load(str(image_path))
-                    print(exif_dict["Exif"])
 
                     # Get the existing GPS IFD dictionary or create a new one if it doesn't exist
                     if piexif.GPSIFD in exif_dict:
