@@ -44,12 +44,14 @@ def _extract_srt_data(srt_path):
             frame_num = int(line_data_raw[0])
             temp_format = "%Y-%m-%d %H:%M:%S.%f"
             cur_time = datetime.datetime.strptime(line_data_raw[3][:-1], temp_format)
+            print(line_data_raw[4])
 
-            temp_attributes = re.findall("[0-9a-zA-Z_.\/]+[\s]?:[\s]?[0-9a-zA-Z.\/]+", line_data_raw[4])
+            temp_attributes = re.findall("[0-9a-zA-Z_.\/]+[\s]?:[\s]?[\-]?[0-9a-zA-Z.\/]+", line_data_raw[4])
             temp_attributes_values = [frame_num, cur_time] + [item.split(':')[-1].strip() for item in temp_attributes]
-            print()
 
             attributes_values.append(temp_attributes_values)
+            
+            
 
     # fnum: f-value, ev: Exposure Value, ct: Color Temperature, focal_len: Focal Length, 
     # Still unknown: dzoom_ratio, delta
@@ -57,6 +59,8 @@ def _extract_srt_data(srt_path):
                                  'ev', 'ct', 'color_md', 'focal_len', 
                                  'dzoom_ratio', 'delta', 'latitude', 
                                  'longitude', 'rel_alt', 'abs_alt'])
+    
+    print(data)
     
     return data
             
