@@ -1,3 +1,5 @@
+
+
 from pathlib import Path
 import pandas as pd
 import pandas.tseries.offsets as offsets
@@ -18,6 +20,8 @@ def _deg2rational(temp):
 
 
 def _extract_srt_data(srt_path):
+    
+    print("SRT File: ", srt_path.name)
     attributes_values = []
     
     # Extracts frame attributes from the SRT content
@@ -43,6 +47,7 @@ def _extract_srt_data(srt_path):
 
             temp_attributes = re.findall("[0-9a-zA-Z_.\/]+[\s]?:[\s]?[0-9a-zA-Z.\/]+", line_data_raw[4])
             temp_attributes_values = [frame_num, cur_time] + [item.split(':')[-1].strip() for item in temp_attributes]
+            print()
 
             attributes_values.append(temp_attributes_values)
 
@@ -66,7 +71,7 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
     movie_dir = Path(movie_dir)
     movie_path = [temp for temp in movie_dir.glob("*.MP4")]
 
-    # with use of SRT data
+    # in case of SRT data
     if reference_gnss_data == 0:
         
         # path of SRT file
@@ -104,8 +109,8 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
                     # create clipped image
                     cv2.imwrite(str(image_path), frame, [cv2.IMWRITE_JPEG_QUALITY, 100]) 
 
-                    # Create a new GPS tag with latitude, longitude, and altitude values
-                    # Please note that sign of lat or lon are not considered yet
+                    # create a new GPS tag with latitude, longitude, and altitude values
+                    # please note that sign of lat or lon are not considered yet
                     gps_data = {
                         piexif.GPSIFD.GPSLatitudeRef: 'N',
                         piexif.GPSIFD.GPSLatitude: _deg2rational(float(srt_data.iloc[index_export_frame]["latitude"])),
@@ -161,6 +166,7 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
 
 
     elif reference_gnss_data == 1:
+        
         # format csv data
         csv_data = pd.read_csv(csv_path, encoding="shift-jis")
         csv_data["isVideo_diff"] = csv_data["isVideo"].diff()
