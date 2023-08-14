@@ -102,6 +102,15 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
                 movie_cap.set(cv2.CAP_PROP_POS_FRAMES, index_export_frame)
 
                 ret, frame = movie_cap.read()
+                
+                # read geo-corrdinations
+                temp_latitude = srt_data.iloc[index_export_frame]["latitude"]
+                temp_longitude = srt_data.iloc[index_export_frame]["longitude"]
+                temp_absolute_altitude = srt_data.iloc[index_export_frame]["abs_alt"]
+                
+                # check whether both latitude and longitude are correctly captured
+                flag_lat_lon_captured = (temp_latitude == 0) and (temp_longitude == 0)
+                
                 if ret:
                     frame_name = movie_path_each.stem + "_" + "{:05}".format(index_export_frame) + ".jpeg"
                     image_path = result_dir_path / frame_name
@@ -113,11 +122,11 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
                     # please note that sign of lat or lon are not considered yet
                     gps_data = {
                         piexif.GPSIFD.GPSLatitudeRef: 'N',
-                        piexif.GPSIFD.GPSLatitude: _deg2rational(float(srt_data.iloc[index_export_frame]["latitude"])),
+                        piexif.GPSIFD.GPSLatitude: _deg2rational(float(temp_latitude)),
                         piexif.GPSIFD.GPSLongitudeRef: 'E',
-                        piexif.GPSIFD.GPSLongitude: _deg2rational(float(srt_data.iloc[index_export_frame]["longitude"])),
+                        piexif.GPSIFD.GPSLongitude: _deg2rational(float(temp_longitude)),
                         piexif.GPSIFD.GPSAltitudeRef: 0,
-                        piexif.GPSIFD.GPSAltitude: (int(float(srt_data.iloc[index_export_frame]["abs_alt"]) * 1000), 1000)
+                        piexif.GPSIFD.GPSAltitude: (int(float(temp_absolute_altitude) * 1000), 1000)
                     }
 
                     shutter_speed_numerator = int(srt_data.iloc[index_export_frame]["shutter"].split("/")[0])
@@ -125,7 +134,7 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
                     shutter_speed = (shutter_speed_numerator, shutter_speed_denominator)
 
                     # something wrong with value's formatting.
-                    # only DateTimeOriginal, FNumber and FocalLengthIn35mmFilm are correctly stored into generated Exif.
+                    # only DateTimeOriginal, FNumber and FocalLengthIn35mmFilm are correctly stored into generated Exif. Others are not.
                     exif_data = {
                         piexif.ExifIFD.DateTimeOriginal: srt_data.iloc[index_export_frame]["time"].strftime("%Y:%m:%d %H:%M:%S"),
                         piexif.ExifIFD.ISOSpeed: int(srt_data.iloc[index_export_frame]["iso"]), # Long
@@ -150,7 +159,8 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
                         exif_ifd = {}
 
                     # Add the new GPS tag data to the GPS IFD dictionary
-                    gps_ifd.update(gps_data)
+                    if not flag_lat_lon_captured:
+                        gps_ifd.update(gps_data)
                     exif_ifd.update(exif_data)
                     exif_dict= {"0th":{}, "Exif":exif_ifd, "GPS":gps_ifd, "1st":{}, "thumbnail":None}
 
