@@ -44,7 +44,6 @@ def _extract_srt_data(srt_path):
             frame_num = int(line_data_raw[0])
             temp_format = "%Y-%m-%d %H:%M:%S.%f"
             cur_time = datetime.datetime.strptime(line_data_raw[3][:-1], temp_format)
-            print(line_data_raw[4])
 
             temp_attributes = re.findall("[0-9a-zA-Z_.\/]+[\s]?:[\s]?[\-]?[0-9a-zA-Z.\/]+", line_data_raw[4])
             temp_attributes_values = [frame_num, cur_time] + [item.split(':')[-1].strip() for item in temp_attributes]
@@ -59,9 +58,7 @@ def _extract_srt_data(srt_path):
                                  'ev', 'ct', 'color_md', 'focal_len', 
                                  'dzoom_ratio', 'delta', 'latitude', 
                                  'longitude', 'rel_alt', 'abs_alt'])
-    
-    print(data)
-    
+        
     return data
             
             
@@ -171,12 +168,16 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
                     # Save the updated EXIF metadata back to the image file
                     exif_bytes = piexif.dump(exif_dict)
                     piexif.insert(exif_bytes, str(image_path))
+                    
+                    temp_geo_coord = np.float64(srt_data.iloc[index_export_frame][["latitude", "longitude", "abs_alt"]].values)
 
                     print(movie_path_each.stem, 
                         "{:05}".format(index_export_frame),
                         "/",
                         nb_frames,
-                        srt_data.iloc[index_export_frame][["latitude", "longitude", "abs_alt"]].values)
+                        " lat: ", "{:<11.6f}".format(temp_geo_coord[0]),
+                        "lon: ", "{:<11.6f}".format(temp_geo_coord[1]),
+                        "alt: ", "{:<8.3f}".format(temp_geo_coord[2]))
 
 
     elif reference_gnss_data == 1:
