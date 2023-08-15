@@ -97,7 +97,7 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
             # import movie
             movie_cap = cv2.VideoCapture(str(movie_path_each))
             
-            for index_export_frame in range(start_frame, end_frame, frame_interval):
+            for index_export_frame in range(start_frame, end_frame-1 , frame_interval):
 
                 # create image from frame
                 movie_cap.set(cv2.CAP_PROP_POS_FRAMES, index_export_frame)
