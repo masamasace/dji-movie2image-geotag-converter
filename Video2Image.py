@@ -62,7 +62,7 @@ def _extract_srt_data(srt_path):
     return data
             
             
-def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, reference_gnss_data):
+def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, reference_gnss_data, csv_encoding="utf-8"):
     
     # decompose parameters
     frame_interval, start_frame, end_frame_temp = initial_parameters
@@ -77,13 +77,13 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
         
         # path of SRT file
         for movie_path_each in movie_path:
-            srt_path_each = movie_path_each.parent / (movie_path_each.stem + ".SRT")
 
             # make result directory
             result_dir_path = movie_path_each.parent / "res"
             result_dir_path.mkdir(exist_ok=True)
 
             # format srt_data to pandas dataframe
+            srt_path_each = movie_path_each.parent / (movie_path_each.stem + ".SRT")
             srt_data = _extract_srt_data(srt_path_each)
 
             # get basic information of the movie file
@@ -181,9 +181,9 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
 
 
     elif reference_gnss_data == 1:
-        
+            
         # format csv data
-        csv_data = pd.read_csv(csv_path, encoding="shift-jis")
+        csv_data = pd.read_csv(csv_path, encoding=csv_encoding)
         csv_data["isVideo_diff"] = csv_data["isVideo"].diff()
         print(csv_data[["datetime(utc)", "isVideo_diff"]][csv_data["isVideo_diff"] != 0])
 
@@ -202,6 +202,10 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
 
         # generate frames
         for movie_path_each in movie_path:
+            # make result directory
+            result_dir_path = movie_path_each.parent / "res"
+            result_dir_path.mkdir(exist_ok=True)
+            
             ## get basic information of the movie file
             video_info = ffmpeg.probe(movie_path_each)
             nb_frames = int(video_info["streams"][0]["nb_frames"])
@@ -235,7 +239,7 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
                 ret, frame = movie_cap.read()
                 if ret:
                     frame_name = movie_path_each.stem + "_" + "{:05}".format(index_export_frame) + ".jpeg"
-                    image_path = result_dir / frame_name
+                    image_path = result_dir_path / frame_name
                     cv2.imwrite(str(image_path), frame, [cv2.IMWRITE_JPEG_QUALITY, 100]) 
 
                     # Create a new GPS tag with latitude, longitude, and altitude values

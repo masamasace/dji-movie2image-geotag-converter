@@ -12,5 +12,6 @@ movie_dir = "PATH-TO-MOVIE-DIRECTORY"
 
 # 0: SRT file, 1: CSV file processed with AIRDATA.com
 reference_gnss_data = 0
+csv_encoding = "shift-jis"
 
 Video2Image.generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, reference_gnss_data)
