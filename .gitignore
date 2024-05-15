@@ -1,3 +1,4 @@
 *.pptx
-*setup.py
+*_sample.py
+*.xml
 /__pycache__/

@@ -43,7 +43,13 @@ def _extract_srt_data(srt_path):
 
             frame_num = int(line_data_raw[0])
             temp_format = "%Y-%m-%d %H:%M:%S.%f"
-            cur_time = datetime.datetime.strptime(line_data_raw[3][:-1], temp_format)
+            temp_time_str = line_data_raw[3][:-1]
+            if temp_time_str.count(",") == 2:
+                temp_time_str = temp_time_str.split(",")[0] + "." + temp_time_str.split(",")[1] + temp_time_str.split(",")[2]
+            elif temp_time_str.count(",") == 1:
+                temp_time_str = temp_time_str.split(",")[0] + "." + temp_time_str.split(",")[1] + "000"
+            
+            cur_time = datetime.datetime.strptime(temp_time_str, temp_format)
 
             temp_attributes = re.findall("[0-9a-zA-Z_.\/]+[\s]?:[\s]?[\-]?[0-9a-zA-Z.\/]+", line_data_raw[4])
             temp_attributes_values = [frame_num, cur_time] + [item.split(':')[-1].strip() for item in temp_attributes]
@@ -54,10 +60,8 @@ def _extract_srt_data(srt_path):
 
     # fnum: f-value, ev: Exposure Value, ct: Color Temperature, focal_len: Focal Length, 
     # Still unknown: dzoom_ratio, delta
-    data = pd.DataFrame(attributes_values, columns=['frame_num', 'time', 'iso', 'shutter', 'fnum', 
-                                 'ev', 'ct', 'color_md', 'focal_len', 
-                                 'dzoom_ratio', 'delta', 'latitude', 
-                                 'longitude', 'rel_alt', 'abs_alt'])
+    col_name = ['frame_num', 'time'] + [item.split(':')[0].strip() for item in temp_attributes]
+    data = pd.DataFrame(attributes_values, columns=col_name)
         
     return data
             
@@ -85,6 +89,8 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
             # format srt_data to pandas dataframe
             srt_path_each = movie_path_each.parent / (movie_path_each.stem + ".SRT")
             srt_data = _extract_srt_data(srt_path_each)
+            
+            alt_label = "abs_alt" if "abs_alt" in srt_data.columns.values else "altitude"
 
             # get basic information of the movie file
             video_info = ffmpeg.probe(movie_path_each)
@@ -93,6 +99,8 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
                 end_frame = nb_frames
             else:
                 end_frame = end_frame_temp
+                
+            
             
             # import movie
             movie_cap = cv2.VideoCapture(str(movie_path_each))
@@ -107,7 +115,7 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
                 # read geo-corrdinations
                 temp_latitude = srt_data.iloc[index_export_frame]["latitude"]
                 temp_longitude = srt_data.iloc[index_export_frame]["longitude"]
-                temp_absolute_altitude = srt_data.iloc[index_export_frame]["abs_alt"]
+                temp_absolute_altitude = srt_data.iloc[index_export_frame][alt_label]
                 
                 # check whether both latitude and longitude are correctly captured
                 flag_lat_lon_captured = (temp_latitude == 0) and (temp_longitude == 0)
@@ -169,7 +177,7 @@ def generate_frames_with_geotag(initial_parameters, csv_path, movie_dir, referen
                     exif_bytes = piexif.dump(exif_dict)
                     piexif.insert(exif_bytes, str(image_path))
                     
-                    temp_geo_coord = np.float64(srt_data.iloc[index_export_frame][["latitude", "longitude", "abs_alt"]].values)
+                    temp_geo_coord = np.float64(srt_data.iloc[index_export_frame][["latitude", "longitude", alt_label]].values)
 
                     print(movie_path_each.stem, 
                         "{:05}".format(index_export_frame),
